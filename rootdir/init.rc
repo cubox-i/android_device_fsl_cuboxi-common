@@ -1,0 +1,213 @@
+import init.${ro.hardware}.usb.rc
+
+on init
+    start watchdogd
+
+    # See storage config details at http://source.android.com/tech/storage/
+    chmod 0701 /mnt/media_rw
+    chown root root /mnt/media_rw
+    mkdir /mnt/shell/emulated 0700 shell shell
+    mkdir /storage/emulated 0555 root root
+    mkdir /storage/sdcard1 0775 system system
+    mkdir /storage/usbdisk0 0775 system system
+    mkdir /mnt/media_rw/sdcard1 0775 system system
+    mkdir /mnt/media_rw/usbdisk0 0775 system system
+
+    export EXTERNAL_STORAGE /storage/emulated/legacy
+    export SECONDARY_STORAGE /storage/sdcard1:/storage/usbdisk0
+    export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
+    export EMULATED_STORAGE_TARGET /storage/emulated
+
+    # Support legacy paths
+    symlink /storage/emulated/legacy /sdcard
+    symlink /storage/emulated/legacy /mnt/sdcard
+    symlink /storage/emulated/legacy /storage/sdcard0
+    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+    symlink /storage/sdcard1 /extSdCard
+    symlink /storage/sdcard1 /mnt/extSdCard
+    symlink /storage/usbdisk0 /usbdisk0
+    symlink /storage/usbdisk0 /mnt/usbdisk0
+
+on post-fs-data
+     # we will remap this as /mnt/sdcard with the sdcard fuse tool
+     mkdir /data/media 0775 media_rw media_rw
+     chown media_rw media_rw /data/media
+    setprop vold.post_fs_data_done 1
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+    chown wifi wifi /dev/rfkill
+    chmod 0660 /dev/rfkill
+
+# permissions for bluetooth.
+#    setprop ro.bt.bdaddr_path "/factory/bluetooth/bt_addr"
+    chown bluetooth net_bt_stack ro.bt.bdaddr_path
+    chown bluetooth net_bt_stack /dev/ttySAC0
+    chmod 0660 /dev/ttymxc3
+    chmod 0660 /sys/class/rfkill/rfkill1/state
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill1/state
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill1/type
+    restorecon /sys/class/rfkill/rfkill1/state
+    restorecon /sys/class/rfkill/rfkill1/type
+
+on boot
+
+    # Set adb to be on TCP
+    setprop service.adb.tcp.port 5555
+    # Disable adb security
+    setprop ro.adb.secure 0
+
+    # emmulate battery property
+    setprop sys.emulated.battery 1
+
+    # Set permission for IIM node
+    symlink /dev/mxs_viim /dev/mxc_mem
+
+    # Set GPU minimal clock (in case of heating to 90c).
+    # Value is from 1 to 64 where 1 is 1/64 from the IP clock
+    # The value 8 below is from Freescale recommendation
+    write /sys/module/galcore/parameters/gpu3DMinClock 8
+
+    # Disable bus frequency
+    write /sys/devices/platform/imx_busfreq.0/enable 0
+
+    # Enable Tethering in the Settings
+    setprop ro.tether.denied false
+
+    # 3D acceleration property
+    setprop debug.sf.showfps    0
+    setprop debug.sf.enable_hgl 1
+    setprop debug.egl.hw	1
+
+    setprop hwc.stretch.filter  1
+    setprop hwc.enable_dither   1
+
+    # fsl omx graphic manager media framework property
+    setprop media.omxgm.enable-player 1
+    setprop media.omxgm.enable-record 1
+    setprop media.omxgm.enable-scan 1
+    setprop rw.VIDEO_RENDER_NAME video_render.surface
+
+    #Define the config for dual camera
+    setprop camera.disable_zsl_mode 1
+    #For landscape mode, orient is 0
+    #For portrait mode, orient is 90
+    #the android before honycomb are all in portrait mode
+    setprop back_camera_name uvc
+    setprop back_camera_orient 0
+
+    # Set OpenGLES version
+    setprop ro.opengles.version 131072
+
+    # Set rotation to 270 to cofigure as portrait mode
+    setprop ro.sf.hwrotation 0
+
+    # Set the density to 160dpi, default 128dpi is not good
+    setprop ro.sf.lcd_density 160
+
+    # Set extsd access permission
+    setprop persist.sampling_profiler 1
+
+# change for FSL specific service
+    chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+    chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    chown root system /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq
+    chmod 0440 /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq
+    chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies
+    chown root system /sys/devices/system/cpu/cpu0/online
+    chmod 0664 /sys/devices/system/cpu/cpu0/online
+    chown root system /sys/devices/system/cpu/cpu1/online
+    chmod 0664 /sys/devices/system/cpu/cpu1/online
+    chown root system /sys/devices/system/cpu/cpu2/online
+    chmod 0664 /sys/devices/system/cpu/cpu2/online
+    chown root system /sys/devices/system/cpu/cpu3/online
+    chmod 0664 /sys/devices/system/cpu/cpu3/online
+
+    # prepare for ril
+    setprop gsm.ril.delay 15
+    setprop ro.ril.wake_lock_timeout 300
+
+    # Emulate frond led as being a backlight
+    chown system system /sys/class/leds/imx6\:red\:front/brightness
+    chmod 0660 /sys/class/leds/imx6\:red\:front/brightness
+
+    # Set BT / WiFi
+    setprop hw.bluetooth 1
+    setprop wlan.interface wlan0
+
+# mount the debugfs
+    mount debugfs none /sys/kernel/debug/
+
+#load wifi/bt modules
+service wifi_loader /system/bin/wifi/rc.wifi start
+    class late_start
+    oneshot
+
+# create virtual SD card at /mnt/sdcard, based on the /data/media directory
+# daemon will drop to user/group system/media_rw after initializing
+# underlying files in /data/media wil be created with user and group media_rw (1023)
+service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
+    class late_start
+
+service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/sdcard1 /storage/sdcard1
+    class late_start
+    disabled
+
+service fuse_usbdisk0 /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/usbdisk0 /storage/usbdisk0
+    class late_start
+    disabled
+
+#BCM
+service hciattach /system/bin/wifi/rc.bt
+    class main
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+
+service wpa_supplicant /system/bin/wpa_supplicant \
+    -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf
+    class late_start
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service p2p_supplicant /system/bin/wpa_supplicant \
+    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf -N \
+    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf
+    class late_start
+    disabled
+    oneshot
+
+service rtw_suppl_con /system/bin/rtl_wpa_supplicant \
+    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf -e/data/misc/wifi/entropy.bin -N \
+    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf
+    class late_start
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+# magd daemon
+service magd /system/bin/magd
+    class main
+    user system
+    group input
+    oneshot
+
+# Orion InG
+service ing /system/bin/ingsvcd -c /system/etc/gps/Orion.ini
+    socket athrkv9988    stream 666 system system
+    socket athrshmsocket stream 666 system system
+    socket athrsupl59991 stream 666 system system
+    class late_start
+    user root
+    group gps
+    oneshot
+
+on fs
+    setprop ro.crypto.fuse_sdcard true
+    mount_all /fstab.freescale
