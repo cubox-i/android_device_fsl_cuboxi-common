@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-# CuBox-i common mk file.
-# Based on sabre-sd
+# cubox-i common mk file.
+# based on sabre-sd
 
 COMMON_PATH := device/fsl/cuboxi-common
 
@@ -24,25 +23,28 @@ DEVICE_PACKAGE_OVERLAYS := $(COMMON_PATH)/overlay
 PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-$(call inherit-product, device/fsl/imx6/imx6.mk)
+$(call inherit-product, device/fsl/imx6-common/common.mk)
 
-# fstab
-TARGET_RECOVERY_FSTAB = device/fsl/cuboxi/fstab.freescale
-PRODUCT_COPY_FILES +=    \
-    $(COMMON_PATH)/fstab.freescale:root/fstab.freescale
-
-# copying prebuilt files
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/system/etc/permissions/required_hardware.xml:system/etc/permissions/required_hardware.xml \
-    $(COMMON_PATH)/rootdir/init.rc:root/init.freescale.rc
-
-PRODUCT_COPY_FILES +=    \
-    external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6d.bin:system/lib/firmware/vpu/vpu_fw_imx6d.bin \
-    external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6q.bin:system/lib/firmware/vpu/vpu_fw_imx6q.bin
+# inherit VENDOR blobs and configuration.
+$(call inherit-product-if-exists, vendor/fsl/cuboxi-common/cuboxi-common-vendor.mk)
 
 # product characteristics
 PRODUCT_CHARACTERISTICS := tablet
 PRODUCT_AAPT_CONFIG += xlarge large tvdpi hdpi
+
+# fstab
+TARGET_RECOVERY_FSTAB = device/fsl/cuboxi-common/fstab.freescale
+PRODUCT_COPY_FILES += \
+    $(COMMON_PATH)/fstab.freescale:root/fstab.freescale
+
+# copying prebuilt files
+PRODUCT_COPY_FILES += \
+    $(COMMON_PATH)/rootdir/system/etc/permissions/required_hardware.xml:system/etc/permissions/required_hardware.xml \
+    $(COMMON_PATH)/rootdir/init.rc:root/init.freescale.rc
+
+PRODUCT_COPY_FILES += \
+    external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6d.bin:system/lib/firmware/vpu/vpu_fw_imx6d.bin \
+    external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6q.bin:system/lib/firmware/vpu/vpu_fw_imx6q.bin
 
 # permissions
 PRODUCT_COPY_FILES += \
@@ -61,16 +63,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.location.xml:system/etc/permissions/android.hardware.location.xml
-
-# 4329 and 4330 firmware files
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/firmware/brcm/bcm4329_fw.bin:system/etc/firmware/brcm/brcmfmac4329-sdio.bin \
-    $(COMMON_PATH)/firmware/brcm/bcm4329_nvram.txt:system/etc/firmware/brcm/brcmfmac4329-sdio.txt \
-    $(COMMON_PATH)/firmware/brcm/bcm4329.hcd:system/etc/firmware/brcm/BCM4329B1.hcd \
-    $(COMMON_PATH)/firmware/brcm/bcm4330_fw.bin:system/etc/firmware/brcm/brcmfmac4330-sdio.bin \
-    $(COMMON_PATH)/firmware/brcm/bcm4330_nvram.txt:system/etc/firmware/brcm/brcmfmac4330-sdio.txt \
-    $(COMMON_PATH)/firmware/brcm/bcm4330.hcd:system/etc/firmware/brcm/BCM4330.hcd \
-    $(COMMON_PATH)/rootdir/system/bin/wifi/rc.wifi:system/bin/wifi/rc.wifi
 
 PRODUCT_PACKAGES += \
     bt_vendor.conf \

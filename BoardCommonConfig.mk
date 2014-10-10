@@ -13,12 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 #
 # Product-common compile-time definitions.
 #
 
-include device/fsl/imx6/BoardConfigCommon.mk
+include device/fsl/imx6-common/BoardConfigCommon.mk
 include device/fsl-proprietary/gpu-viv/fsl-gpu.mk
 
 # SoC-specific compile-time definitions.
@@ -90,6 +89,7 @@ NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 # IMX6_CONSUMER_IR_HAL := true
 
 # bootloader setup
+BOARD_USES_IMX_UBOOTLOADER := true
 TARGET_BOOTLOADER_SOURCE := bootable/bootloader/uboot-imx
 TARGET_BOOTLOADER_CONFIG := mx6_cubox-i_config
 TARGET_BOOTLOADER_BOARD_NAME := CUBOX-I
@@ -107,11 +107,11 @@ BOARD_KERNEL_CMDLINE := console=ttymxc0,115200 init=/init video=mxcfb0:dev=hdmi,
 
 # sepolicy
 BOARD_SEPOLICY_DIRS := \
-       device/fsl/cuboxi-common/sepolicy
+    device/fsl/cuboxi-common/sepolicy
 
 BOARD_SEPOLICY_UNION := \
-       app.te \
-       file_contexts \
-       fs_use \
-       untrusted_app.te \
-       genfs_contexts
+    app.te \
+    file_contexts \
+    fs_use \
+    untrusted_app.te \
+    genfs_contexts
