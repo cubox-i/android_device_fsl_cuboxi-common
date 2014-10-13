@@ -18,7 +18,6 @@
 #
 
 include device/fsl/imx6-common/BoardConfigCommon.mk
-include device/fsl-proprietary/gpu-viv/fsl-gpu.mk
 
 # SoC-specific compile-time definitions.
 BOARD_SOC_TYPE := IMX6DQ
@@ -28,9 +27,6 @@ HAVE_FSL_IMX_GPU2D := true
 HAVE_FSL_IMX_GPU3D := true
 HAVE_FSL_IMX_IPU := true
 BOARD_KERNEL_BASE := 0x10800000
-
-# include external codecs sources
-include external/fsl_vpu_omx/codec_env.mk
 
 # build for ext4
 BUILD_TARGET_FS := ext4
@@ -115,3 +111,9 @@ BOARD_SEPOLICY_UNION := \
     fs_use \
     untrusted_app.te \
     genfs_contexts
+
+# include external codecs sources
+include external/fsl_vpu_omx/codec_env.mk
+
+# gpu sources
+include device/fsl-proprietary/gpu-viv/fsl-gpu.mk
