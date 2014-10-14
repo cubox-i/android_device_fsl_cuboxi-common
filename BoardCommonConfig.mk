@@ -44,15 +44,15 @@ BOARD_WPA_SUPPLICANT_PRIVATE_LIB  := lib_driver_cmd_bcmdhd
 BOARD_HOSTAPD_DRIVER              := NL80211
 BOARD_HOSTAPD_PRIVATE_LIB         := lib_driver_cmd_bcmdhd
 
-# modem
-BOARD_MODEM_VENDOR := AMAZON
-
 # gps
 # BOARD_HAVE_HARDWARE_GPS := false
 USE_QEMU_GPS_HARDWARE := true
 
 # for accelerator sensor, need to define sensor type here
 BOARD_HAS_SENSOR := true
+
+# modem
+BOARD_MODEM_VENDOR := AMAZON
 
 # for recovery service
 TARGET_SELECT_KEY := 28
@@ -72,7 +72,7 @@ USE_ION_ALLOCATOR := false
 USE_GPU_ALLOCATOR := true
 USE_OPENGL_RENDERER := true
 TARGET_HAVE_IMX_GRALLOC := true
-TARGET_HAVE_IMX_HWCOMPOSER = true
+TARGET_HAVE_IMX_HWCOMPOSER := true
 
 # camera hal v2
 IMX_CAMERA_HAL_V2 := true
@@ -93,7 +93,7 @@ TARGET_BOOTLOADER_BOARD_NAME := CUBOX-I
 # kernel setup
 BOARD_USES_UBOOT := true
 BOARD_KERNEL_IMAGE_NAME := uImage
-TARGET_KERNEL_SOURCE := kernel_imx
+TARGET_KERNEL_SOURCE := kernel/fsl/imx
 TARGET_KERNEL_CONFIG := imx6_cubox-i_hummingboard_android_defconfig
 BOARD_KERNEL_CMDLINE := console=ttymxc0,115200 init=/init video=mxcfb0:dev=hdmi,1280x720M@60,if=RGB24 video=mxcfb1:off video=mxcfb2:off fbmem=10M vmalloc=400M androidboot.console=ttymxc0 androidboot.hardware=freescale
 
@@ -114,6 +114,3 @@ BOARD_SEPOLICY_UNION := \
 
 # include external codecs sources
 include external/fsl_vpu_omx/codec_env.mk
-
-# gpu sources
-include device/fsl-proprietary/gpu-viv/fsl-gpu.mk
