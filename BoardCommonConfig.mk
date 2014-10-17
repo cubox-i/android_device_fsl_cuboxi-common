@@ -27,6 +27,8 @@ HAVE_FSL_IMX_GPU2D := true
 HAVE_FSL_IMX_GPU3D := true
 HAVE_FSL_IMX_IPU := true
 BOARD_KERNEL_BASE := 0x10800000
+BOARD_CUSTOM_BOOTIMG_MK := device/fsl/cuboxi-common/shbootimg.mk
+TARGET_RECOVERY_FSTAB := device/fsl/cuboxi-common/fstab.freescale
 
 # build for ext4
 BUILD_TARGET_FS := ext4
@@ -97,9 +99,29 @@ TARGET_KERNEL_SOURCE := kernel/fsl/imx
 TARGET_KERNEL_CONFIG := imx6_cubox-i_hummingboard_android_defconfig
 BOARD_KERNEL_CMDLINE := console=ttymxc0,115200 init=/init video=mxcfb0:dev=hdmi,1280x720M@60,if=RGB24 video=mxcfb1:off video=mxcfb2:off fbmem=10M vmalloc=400M androidboot.console=ttymxc0 androidboot.hardware=freescale
 
+# boot animation
+TARGET_BOOTANIMATION_PRELOAD := true
+TARGET_BOOTANIMATION_TEXTURE_CACHE := false
+
 # For Linux kernel 3.10.x uncomment the following
 # TARGET_KERNEL_DEFCONF := imx_v7_cubox-i_hummingboard_android_defconfig
 # TARGET_KERNEL_DTB := imx6q-cubox-i.dtb imx6dl-cubox-i.dtb imx6dl-hummingboard.dtb
+
+# TWRP specific build flags
+DEVICE_RESOLUTION := 1280x800
+TW_INTERNAL_STORAGE_PATH := "/data/media"
+TW_INTERNAL_STORAGE_MOUNT_POINT := "data"
+TW_EXTERNAL_STORAGE_PATH := "/usbdisk0"
+TW_EXTERNAL_STORAGE_MOUNT_POINT := "usbdisk0"
+RECOVERY_SDCARD_ON_DATA := true
+BOARD_HAS_NO_REAL_SDCARD := true
+TW_NO_USB_STORAGE := true
+TW_NO_REBOOT_BOOTLOADER := true
+TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID := true
+TW_INCLUDE_FB2PNG := true
+TW_FLASH_FROM_STORAGE := true
+TW_NO_PARTITION_SD_CARD := true
+HAVE_SELINUX := true
 
 # sepolicy
 BOARD_SEPOLICY_DIRS := \

@@ -3,10 +3,10 @@
 # The filesystem that contains the filesystem checker binary (typically /system) cannot
 # specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
 
-/devices/platform/fsl-ehci /mnt/udisk vfat defaults voldmanaged=sdcard:auto
-/dev/block/mmcblk0p5    /system      ext4    ro                                                                               wait
-/dev/block/mmcblk0p4    /data        ext4    nosuid,nodev,nodiratime,noatime,nomblk_io_submit,noauto_da_alloc,errors=panic    wait,encryptable=footer
-/dev/block/mmcblk0p6    /cache       ext4    nosuid,nodev,nomblk_io_submit                                                    wait
+/devices/platform/fsl-ehci auto auto defaults voldmanaged=usbdisk0:auto
+/dev/block/mmcblk0p5    /system      ext4    ro,noatime                                                                       wait
+/dev/block/mmcblk0p4    /data        ext4    noatime,nosuid,nodev,discard,noauto_da_alloc,journal_async_commit,errors=panic   wait,check,encryptable=footer
+/dev/block/mmcblk0p6    /cache       ext4    noatime,nosuid,nodev,journal_async_commit,errors=panic                           wait
 /dev/block/mmcblk0p7    /device      ext4    ro,nosuid,nodev                                                                  wait
 /dev/block/mmcblk0p1    /boot        emmc    defaults                                                                         defaults
 /dev/block/mmcblk0p2    /recovery    emmc    defaults                                                                         defaults

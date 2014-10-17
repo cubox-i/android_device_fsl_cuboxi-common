@@ -1,7 +1,16 @@
-import init.${ro.hardware}.usb.rc
+import /init.usb.freescale.rc
 
 on init
     start watchdogd
+
+#   setup the global environment
+    export SHM_MOUNTPOINT /mnt/shm
+    export LIGHTSENSOR_PATH /sys/class/i2c-adapter/i2c-1/1-0044
+    export VPU_FW_PATH /system/lib/firmware/vpu
+    export CODEC_SHM_PATH /mnt/shm
+    export CORE_REGISTER_FILE /system/etc/core_register
+    export COMPONENT_REGISTER_FILE /system/etc/component_register
+    export CONTENTPIPE_REGISTER_FILE /system/etc/contentpipe_register
 
 #   see storage config details at http://source.android.com/tech/storage/
     chmod 0701 /mnt/media_rw
@@ -11,6 +20,10 @@ on init
     mkdir /storage/emulated 0555 root root
     mkdir /storage/usbdisk0 0775 system system
     mkdir /mnt/media_rw/usbdisk0 0775 system system
+    mkdir /mnt/media_rw/extsd 0755 system system
+    mkdir /mnt/media_rw/usbdisk0 0755 system system
+
+    mkdir /device 0771 system system
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export SECONDARY_STORAGE /storage/usbdisk0
@@ -24,21 +37,30 @@ on init
     symlink /mnt/shell/emulated/0 /storage/emulated/legacy
     symlink /storage/usbdisk0 /usbdisk0
     symlink /storage/usbdisk0 /mnt/usbdisk0
+    symlink /mnt/media_rw/extsd /storage/extsd
+    symlink /mnt/media_rw/usbdisk0 /storage/usbdisk0
+
+on fs
+
+    setprop ro.crypto.fuse_sdcard true
+    mount_all /fstab.freescale
 
 on post-fs-data
 
     mkdir /data/media 0775 media_rw media_rw
-     chown media_rw media_rw /data/media
+    chown media_rw media_rw /data/media
+
     setprop vold.post_fs_data_done 1
+
+# for wifi
     mkdir /data/misc/wifi 0770 wifi wifi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
-    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    mkdir /data/misc/dhcp 0775 dhcp dhcp
     chown dhcp dhcp /data/misc/dhcp
     chown wifi wifi /dev/rfkill
     chmod 0660 /dev/rfkill
 
-#   permissions for bluetooth.
-#   setprop ro.bt.bdaddr_path "/factory/bluetooth/bt_addr"
+#   bluetooth
     chown bluetooth net_bt_stack ro.bt.bdaddr_path
     chown bluetooth net_bt_stack /dev/ttySAC0
     chmod 0660 /dev/ttymxc3
@@ -47,6 +69,12 @@ on post-fs-data
     chown bluetooth net_bt_stack /sys/class/rfkill/rfkill1/type
     restorecon /sys/class/rfkill/rfkill1/state
     restorecon /sys/class/rfkill/rfkill1/type
+
+on post-fs
+
+#   load wifi module
+    insmod /system/lib/modules/brcmutil.ko
+    insmod /system/lib/modules/brcmfmac.ko
 
 on boot
 
@@ -58,6 +86,9 @@ on boot
 
 #   emmulate battery property
     setprop sys.emulated.battery 1
+
+#   set GPU 3D minimum clock to 3/64
+    write /sys/module/galcore/parameters/gpu3DMinClock 3
 
 #   set permission for IIM node
     symlink /dev/mxs_viim /dev/mxc_mem
@@ -73,6 +104,13 @@ on boot
 #   enable tethering in the settings
     setprop ro.tether.denied false
 
+#   alsa mixer naming define
+    setprop alsa.mixer.playback.master Playback
+    setprop alsa.mixer.capture.master Capture
+    setprop alsa.mixer.playback.speaker Playback
+    setprop alsa.mixer.playback.headset Headphone
+    setprop alsa.mixer.capture.headset Capture
+
 #   3D acceleration property
     setprop debug.sf.showfps    0
     setprop debug.sf.enable_hgl 1
@@ -80,6 +118,15 @@ on boot
 
     setprop hwc.stretch.filter  1
     setprop hwc.enable_dither   1
+
+#   define fsl avi/aac/asf/mkv/flv/flac format support
+    setprop ro.FSL_AVI_PARSER 1
+    setprop ro.FSL_AAC_PARSER 1
+    setprop ro.FSL_ASF_PARSER 0
+    setprop ro.FSL_FLV_PARSER 1
+    setprop ro.FSL_MKV_PARSER 1
+    setprop ro.FSL_FLAC_PARSER 1
+    setprop ro.FSL_MPG2_PARSER 1
 
 #   fsl omx graphic manager media framework property
     setprop media.omxgm.enable-player 1
@@ -95,6 +142,10 @@ on boot
 #   the android before honycomb are all in portrait mode
     setprop back_camera_name uvc
     setprop back_camera_orient 0
+
+#   assume SMP uses shared cpufreq policy for all CPUs
+    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chmod 0660 /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 
 #   change for FSL specific service
     chown root system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -115,13 +166,55 @@ on boot
     chown root system /sys/devices/system/cpu/cpu3/online
     chmod 0664 /sys/devices/system/cpu/cpu3/online
 
+on property:sys.boot_completed=1
+#   set default CPU frequency governor
+#   set timer 40ms, min sample 60ms,hispeed at cpufreq MAX freq in freq_table at load 40%
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpufreq/interactive/go_maxspeed_load 80
+    write /sys/devices/system/cpu/cpufreq/interactive/timer_rate 40000
+    write /sys/devices/system/cpu/cpufreq/interactive/min_sample_time 60000
+    write /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load 40
+    #write /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq 792000
+
+on property:sys.interactive="active"
+#   change interactive atrrubuties permissions when interactive is actived
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/boost
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/boostpulse
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse
+    chown system root /sys/devices/system/cpu/cpufreq/interactive/input_boost
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+    chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+
 #   prepare for ril
-#   setprop gsm.ril.delay 15
-#   setprop ro.ril.wake_lock_timeout 300
+   setprop gsm.ril.delay 15
+   setprop ro.ril.wake_lock_timeout 300
 
 #   emulate frond led as being a backlight
     chown system system /sys/class/leds/imx6\:red\:front/brightness
     chmod 0660 /sys/class/leds/imx6\:red\:front/brightness
+
+#   prepare for wifi
+    setprop wifi.interface wlan0
+    setprop wifi.ap.interface wlan0
+
+#   prepare for bluetooth
+    chmod 665 /sys/class/rfkill/rfkill0/state
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    write /sys/class/rfkill/rfkill0/state 0
 
 #   set BT / WiFi
     setprop hw.bluetooth 1
@@ -130,13 +223,21 @@ on boot
 #   mount the debugfs
     mount debugfs none /sys/kernel/debug/
 
-#   calling wifi service
-    start wifi_loader
-
-service wifi_loader /sbin/brcmfmac_modules.sh
-    class late_start
+service pppd_gprs /etc/ppp/init.gprs-pppd
+    class main
     user root
+    group radio cache inet misc
+    disabled
     oneshot
+
+# create virtual SD card at /mnt/sdcard, based on the /data/media directory
+# daemon will drop to user/group system/media_rw after initializing
+# underlying files in /data/media wil be created with user and group media_rw (1023)
+service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
+    class late_start
+
+service fuse_usbdisk0 /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/usbdisk0 /storage/usbdisk0
+    class late_start
     disabled
 
 service p2p_supplicant /system/bin/wpa_supplicant \
@@ -172,31 +273,55 @@ service wpa_supplicant /system/bin/wpa_supplicant \
     oneshot
 
 service rtw_suppl_con /system/bin/rtl_wpa_supplicant \
-    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf \
-    -e/data/misc/wifi/entropy.bin -N \
+    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf -e/data/misc/wifi/entropy.bin -N \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf
-    class main
+    class late_start
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
     oneshot
 
-# magd daemon
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_p2p /system/bin/dhcpcd -aABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_p2p /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service iprenew_bt-pan /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service iprenew_eth0 /system/bin/dhcpcd -n
+    class main
+    disabled
+    oneshot
+
 service magd /system/bin/magd
     class main
     user system
     group input
     oneshot
-
-# orion InG
-service ing /system/bin/ingsvcd -c /system/etc/gps/Orion.ini
-    socket athrkv9988    stream 666 system system
-    socket athrshmsocket stream 666 system system
-    socket athrsupl59991 stream 666 system system
-    class late_start
-    user root
-    group gps
-    oneshot
-
-on fs
-    setprop ro.crypto.fuse_sdcard true
-    mount_all /fstab.freescale

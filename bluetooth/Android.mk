@@ -1,8 +1,5 @@
-#!/system/bin/sh
 #
-# Copyright (C) 2014 The Android Open Source Project
-#
-# Author: Humberto Borba <humberos@gmail.com>
+# Copyright (C) 2013 Android Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,32 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-PATH=/system/bin/:/system/xbin/
 
-WIFI_PATH=/data/misc/wifi
+LOCAL_PATH := $(call my-dir)
 
-# logging
-#
-set_log() {
-    rm -rf $1
-    exec >> $1 2>&1
-}
+include $(CLEAR_VARS)
 
-set_log ${WIFI_PATH}/init.log
+LOCAL_MODULE := bt_vendor.conf
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT)/etc/bluetooth
 
-# loading dependency
-#
-busybox echo "loading brcmutil.ko"
-insmod /system/lib/modules/brcmutil.ko
+LOCAL_MODULE_TAGS := eng
 
-sync
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
 
-# loading brcmfmac module
-#
-busybox echo "loading brcmfmac.ko"
-insmod /system/lib/modules/brcmfmac.ko
-
-lsmod
-
-exit 0
-
+include $(BUILD_PREBUILT)

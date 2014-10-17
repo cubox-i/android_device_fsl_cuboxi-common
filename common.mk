@@ -20,40 +20,28 @@ COMMON_PATH := device/fsl/cuboxi-common
 
 DEVICE_PACKAGE_OVERLAYS := $(COMMON_PATH)/overlay
 
-PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
-
-$(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
-$(call inherit-product, device/fsl/imx6-common/common.mk)
-
-# inherit VENDOR blobs and configuration.
-$(call inherit-product-if-exists, vendor/fsl/cuboxi-common/cuboxi-common-vendor.mk)
-
 # product characteristics
 PRODUCT_CHARACTERISTICS := tablet
 PRODUCT_AAPT_CONFIG := xlarge large tvdpi hdpi
 
-# fstab
+# init
 TARGET_RECOVERY_FSTAB = device/fsl/cuboxi-common/fstab.freescale
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/fstab.freescale:root/fstab.freescale
+    $(COMMON_PATH)/fstab.freescale:root/fstab.freescale \
+    $(COMMON_PATH)/rootdir/init.freescale.rc:root/init.freescale.rc
 
-# bluetooth
+# twrp
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/bluetooth/bt_vendor.conf:system/etc/bluetooth/bt_vendor.conf
+    $(COMMON_PATH)/rootdir/twrp.fstab:recovery/root/etc/twrp.fstab
 
-# brcmfmac module
+# hardware permissions
 PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/rootdir/brcmfmac_modules.sh:root/sbin/brcmfmac_modules.sh
+    $(COMMON_PATH)/rootdir/system/etc/permissions/required_hardware.xml:system/etc/permissions/required_hardware.xml
 
 # wlan
 PRODUCT_PROPERTY_OVERRIDES += \
     wifi.interface=wlan0 \
     wifi.supplicant_scan_interval=15
-
-# copying prebuilt files
-PRODUCT_COPY_FILES += \
-    $(COMMON_PATH)/rootdir/system/etc/permissions/required_hardware.xml:system/etc/permissions/required_hardware.xml \
-    $(COMMON_PATH)/rootdir/init.freescale.rc:root/init.freescale.rc
 
 # properties
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -64,8 +52,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.hwui.render_dirty_regions=false \
     ro.bq.gpu_to_cpu_unsupported=1 \
     ro.zygote.disable_gl_preload=true
-
-PRODUCT_TAGS += dalvik.gc.type-precise
 
 PRODUCT_COPY_FILES += \
     external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6d.bin:system/lib/firmware/vpu/vpu_fw_imx6d.bin \
@@ -87,9 +73,29 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
-    frameworks/native/data/etc/android.hardware.location.xml:system/etc/permissions/android.hardware.location.xml
+    frameworks/native/data/etc/android.hardware.location.xml:system/etc/permissions/android.hardware.location.xml \
+    packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:/system/etc/permissions/android.software.live_wallpaper.xml
+
+# Live Wallpapers
+PRODUCT_PACKAGES += \
+    Galaxy4 \
+    HoloSpiralWallpaper \
+    LiveWallpapers \
+    LiveWallpapersPicker \
+    MagicSmokeWallpapers \
+    NoiseField \
+    PhaseBeam \
+    VisualizationWallpapers \
+    librs_jni
 
 PRODUCT_PACKAGES += \
     brcm_patchram_plus \
+    bt_vendor.conf	\
     FileManager-1.1.6	\
     ethernet
+
+$(call inherit-product, device/fsl/imx6-common/common.mk)
+
+$(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)
+
+$(call inherit-product, vendor/fsl/cuboxi-common/cuboxi-common-vendor.mk)

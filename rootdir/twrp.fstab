@@ -1,0 +1,8 @@
+# mount point	fstype		device			options (length for cryptfs encryption footer)
+/boot           emmc        /dev/block/mmcblk0p1
+/recovery       emmc        /dev/block/mmcblk0p2
+/cache          ext4        /dev/block/mmcblk0p6
+/system         ext4        /dev/block/mmcblk0p5
+/data           ext4        /dev/block/mmcblk0p4
+
+/usb-otg        vfat        /dev/block/sda1     /dev/block/sda          flags=removable;storage;display=USB-OTG
